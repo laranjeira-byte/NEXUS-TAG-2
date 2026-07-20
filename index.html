@@ -92,7 +92,7 @@
                 </div>
 
                 <!-- CARD TAG CARTÃO -->
-                <div onclick="selectHardware('cartao')" id="card-hardware-cartao" class="group border border-slate-950 bg-slate-900/40 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-cyan-500/40 hover:bg-slate-900/60 transition-all duration-300 relative overflow-hidden box-border">
+                <div onclick="selectHardware('cartao')" id="card-hardware-cartao" class="group border border-slate-955 bg-slate-900/40 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-cyan-500/40 hover:bg-slate-900/60 transition-all duration-300 relative overflow-hidden box-border">
                     <div class="w-32 h-40 flex items-center justify-center mb-6 tag-3d-card">
                         <!-- Simulação Física Cartão NFC 3D com Brilho Neon -->
                         <div class="w-32 h-20 bg-cyan-500/5 border-2 border-cyan-400/40 rounded-lg shadow-[0_0_30px_rgba(6,182,212,0.15)] flex items-center justify-between px-4 tag-3d-inner backdrop-blur-sm relative" style="animation-delay: -2s;">
@@ -202,32 +202,43 @@
         &copy; 2026 Nexus Tag. Tecnologia de Conectividade Física Otimizada.
     </footer>
 
-    <!-- LOGICA DE SELEÇÃO INTERATIVA CORRIGIDA -->
+    <!-- LOGICA DE SELEÇÃO INTERATIVA COMPLETA -->
     <script>
-        // Inicializar os ícones do Lucide
         lucide.createIcons();
 
         let selectedHardware = null;
         let selectedSoftware = null;
 
         function selectHardware(type) {
+            const cardPlaca = document.getElementById('card-hardware-placa');
+            const cardCartao = document.getElementById('card-hardware-cartao');
+
+            // Caso 1: Clicou no que JÁ ESTAVA selecionado -> DESELECONA
+            if (selectedHardware === type) {
+                selectedHardware = null;
+                selectedSoftware = null;
+                resetHardwareVisuals(cardPlaca, cardCartao);
+                resetSoftwareCards();
+                lockPhase2And3();
+                lucide.createIcons();
+                updateSummary();
+                return;
+            }
+
+            // Caso 2: Seleção normal ou alternância (Limpa o anterior antes de aplicar o novo)
             selectedHardware = type;
-            
-            // Resetar estilos visuais dos dois cards de Hardware
-            document.getElementById('card-hardware-placa').className = document.getElementById('card-hardware-placa').className.replace('border-cyan-500 bg-slate-900/60 shadow-[0_0_30px_rgba(6,182,212,0.1)]', 'border-slate-950 bg-slate-900/40');
-            document.getElementById('card-hardware-cartao').className = document.getElementById('card-hardware-cartao').className.replace('border-cyan-500 bg-slate-900/60 shadow-[0_0_30px_rgba(6,182,212,0.1)]', 'border-slate-950 bg-slate-900/40');
-            
-            // Aplicar estilo de selecionado no card correto
+            resetHardwareVisuals(cardPlaca, cardCartao);
+
+            // Aplica o visual ativo apenas no selecionado
             const activeCard = document.getElementById(`card-hardware-${type}`);
-            activeCard.className = activeCard.className.replace('border-slate-950 bg-slate-900/40', 'border-cyan-500 bg-slate-900/60 shadow-[0_0_30px_rgba(6,182,212,0.1)]');
-            
-            // Modificar o botão interno do card selecionado
-            const cards = ['placa', 'cartao'];
-            cards.forEach(c => {
+            activeCard.classList.remove('border-slate-950', 'bg-slate-900/40');
+            activeCard.classList.add('border-cyan-500', 'bg-slate-900/60', 'shadow-[0_0_30px_rgba(6,182,212,0.1)]');
+
+            ['placa', 'cartao'].forEach(c => {
                 const btn = document.querySelector(`#card-hardware-${c} .btn-select`);
                 const icon = document.querySelector(`#card-hardware-${c} .icon-check`);
                 if (c === type) {
-                    btn.className = "mt-6 flex items-center gap-2 text-xs font-semibold border px-4 py-1.5 rounded-full bg-cyan-950/40 border-cyan-500/50 text-cyan-400";
+                    btn.className = "mt-6 flex items-center gap-2 text-xs font-semibold border px-4 py-1.5 rounded-full bg-cyan-950/40 border-cyan-500/50 text-cyan-400 btn-select";
                     icon.setAttribute('data-lucide', 'check-circle-2');
                 } else {
                     btn.className = "mt-6 flex items-center gap-2 text-xs font-semibold text-slate-500 border border-slate-800 rounded-full px-4 py-1.5 hover:border-cyan-500/30 hover:bg-cyan-950/20 hover:text-cyan-400 transition btn-select";
@@ -235,62 +246,101 @@
                 }
             });
 
-            // Desbloquear a Fase 2 de forma fluida
+            // Ativa a Fase 2
             const fase2 = document.getElementById('fase-2');
             fase2.className = "space-y-6 active-phase";
-            
-            const pNumber = fase2.querySelector('.phase-number');
-            pNumber.className = "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold shadow-[0_0_15px_rgba(6,182,212,0.15)] phase-number";
-            
+            fase2.querySelector('.phase-number').className = "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold shadow-[0_0_15px_rgba(6,182,212,0.15)] phase-number";
             fase2.querySelector('.phase-title').className = "text-lg font-bold uppercase tracking-wider text-slate-200 phase-title";
 
             lucide.createIcons();
             updateSummary();
 
-            // Rolar suavemente para a Fase 2 após um pequeno delay de clique
             setTimeout(() => {
                 fase2.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 250);
         }
 
+        function resetHardwareVisuals(placa, cartao) {
+            placa.classList.remove('border-cyan-500', 'bg-slate-900/60', 'shadow-[0_0_30px_rgba(6,182,212,0.1)]');
+            cartao.classList.remove('border-cyan-500', 'bg-slate-900/60', 'shadow-[0_0_30px_rgba(6,182,212,0.1)]');
+            
+            placa.classList.add('border-slate-950', 'bg-slate-900/40');
+            cartao.classList.add('border-slate-950', 'bg-slate-900/40');
+        }
+
+        function lockPhase2And3() {
+            const fase2 = document.getElementById('fase-2');
+            fase2.className = "disabled-phase space-y-6";
+            fase2.querySelector('.phase-number').className = "bg-slate-800 text-slate-500 border border-slate-700 rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold phase-number";
+            fase2.querySelector('.phase-title').className = "text-lg font-bold uppercase tracking-wider text-slate-400 phase-title";
+            
+            document.getElementById('fase-3').className = "disabled-phase bg-slate-900/30 border border-slate-900 rounded-2xl p-6 md:p-8 space-y-6";
+        }
+
         function selectSoftware(type) {
             if (!selectedHardware) return; 
-            selectedSoftware = type;
 
+            if (selectedSoftware === type) {
+                selectedSoftware = null;
+                resetSoftwareCards();
+                document.getElementById('fase-3').className = "disabled-phase bg-slate-900/30 border border-slate-900 rounded-2xl p-6 md:p-8 space-y-6";
+                updateSummary();
+                return;
+            }
+
+            selectedSoftware = type;
             const softwareTypes = ['essential', 'connect-hub', 'full'];
             softwareTypes.forEach(s => {
                 const card = document.getElementById(`card-software-${s}`);
                 const btn = card.querySelector('.software-btn');
+                
+                card.classList.remove('border-cyan-500', 'bg-slate-900/30', 'shadow-[0_0_20px_rgba(6,182,212,0.05)]', 'border-slate-900', 'bg-slate-950');
+                
                 if (s === type) {
-                    card.className = "group border border-cyan-500 bg-slate-900/30 rounded-xl p-5 flex flex-col justify-between cursor-pointer shadow-[0_0_20px_rgba(6,182,212,0.05)]";
+                    card.classList.add('border-cyan-500', 'bg-slate-900/30', 'shadow-[0_0_20px_rgba(6,182,212,0.05)]');
                     btn.className = "mt-5 text-center text-xs font-semibold py-1.5 border border-cyan-500/30 rounded-lg bg-cyan-950/40 text-cyan-400 software-btn";
                     btn.innerText = "Selecionado";
                 } else {
-                    card.className = "group border border-slate-900 bg-slate-950 rounded-xl p-5 flex flex-col justify-between cursor-pointer hover:border-cyan-500/30 hover:bg-slate-900/30 transition-all duration-200";
+                    card.classList.add('border-slate-900', 'bg-slate-950');
                     btn.className = "mt-5 text-center text-xs font-medium text-slate-500 py-1.5 border border-slate-900 rounded-lg bg-slate-900/20 group-hover:text-cyan-400 group-hover:border-cyan-500/20 transition software-btn";
                     btn.innerText = "Escolher Plano";
                 }
             });
 
-            // Desbloquear a Fase 3 (Resumo de Saída)
             document.getElementById('fase-3').className = "bg-slate-900/30 border border-cyan-500/20 rounded-2xl p-6 md:p-8 space-y-6 active-phase shadow-[0_0_40px_rgba(6,182,212,0.02)]";
-
             updateSummary();
+        }
+
+        function resetSoftwareCards() {
+            const softwareTypes = ['essential', 'connect-hub', 'full'];
+            softwareTypes.forEach(s => {
+                const card = document.getElementById(`card-software-${s}`);
+                const btn = card.querySelector('.software-btn');
+                card.classList.remove('border-cyan-500', 'bg-slate-900/30', 'shadow-[0_0_20px_rgba(6,182,212,0.05)]');
+                card.classList.add('border-slate-900', 'bg-slate-950');
+                btn.className = "mt-5 text-center text-xs font-medium text-slate-500 py-1.5 border border-slate-900 rounded-lg bg-slate-900/20 group-hover:text-cyan-400 group-hover:border-cyan-500/20 transition software-btn";
+                btn.innerText = "Escolher Plano";
+            });
         }
 
         function updateSummary() {
             const summaryText = document.getElementById('summary-text');
+            if (!selectedHardware) {
+                summaryText.innerHTML = "Aguardando suas escolhas...";
+                return;
+            }
+            
+            const hardwareLabel = selectedHardware === 'placa' ? 'Tag Placa' : 'Tag Cartão';
+            
             if (selectedHardware && !selectedSoftware) {
-                const hardwareLabel = selectedHardware === 'placa' ? 'Tag Placa' : 'Tag Cartão';
                 summaryText.innerHTML = `<span class="text-cyan-400">${hardwareLabel}</span> selecionada. Defina a experiência digital acima.`;
             } else if (selectedHardware && selectedSoftware) {
-                const hardwareLabel = selectedHardware === 'placa' ? 'Tag Cartão';
                 let softwareLabel = '';
                 if (selectedSoftware === 'essential') softwareLabel = 'Site Essential';
                 if (selectedSoftware === 'connect-hub') softwareLabel = 'Site Connect Hub';
                 if (selectedSoftware === 'full') softwareLabel = 'Site Full';
 
-                summaryText.innerHTML = `Combo Pronto: <span class="text-cyan-400">${selectedHardware === 'placa' ? 'Tag Placa' : 'Tag Cartão'}</span> + <span class="text-cyan-400">${softwareLabel}</span>`;
+                summaryText.innerHTML = `Combo Pronto: <span class="text-cyan-400">${hardwareLabel}</span> + <span class="text-cyan-400">${softwareLabel}</span>`;
             }
         }
     </script>
